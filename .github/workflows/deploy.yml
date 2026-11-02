@@ -1,0 +1,40 @@
+name: Publication des photos (GitHub Pages)
+
+# Publie le dépôt tel quel : pas de construction, pas de Jekyll. Un workflow
+# GitHub Actions plutôt que « publier depuis une branche » : la limite souple de
+# 10 constructions par heure ne s'applique pas à un workflow, alors que « Tout
+# publier » fait un commit par photo.
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Plusieurs photos publiées d'affilée : la publication suivante annule celle en
+# cours, la dernière republie tout.
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupération des photos
+        uses: actions/checkout@v6
+      - name: Configuration de GitHub Pages
+        uses: actions/configure-pages@v6
+      - name: Upload du dépôt
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: '.'
+      - name: Déploiement
+        id: deployment
+        uses: actions/deploy-pages@v5
